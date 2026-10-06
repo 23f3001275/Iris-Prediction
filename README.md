@@ -1,6 +1,6 @@
 # Iris Classifier API
 
-A FastAPI service that serves a scikit-learn model trained on the classic Iris dataset.
+A FastAPI service that serves a scikit-learn model trained on the classic Iris dataset. Deployed on: https://iris-prediction-mor5.onrender.com/ 
 
 ## What the model predicts
 
