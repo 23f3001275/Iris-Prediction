@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Iris species classifier</title>
+    <style>
+        :root {
+            --bg: #eceef3;
+            --panel: #ffffff;
+            --ink: #1d2133;
+            --muted: #5d6378;
+            --line: #d5d9e3;
+            --iris: #4f3f8f;
+            --iris-soft: #e4e0f3;
+            --ok: #2f6b48;
+            --bad: #a83232;
+            --radius-lg: 14px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font: 16px/1.5 "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+        }
+
+        .wrap {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 32px 20px 48px;
+        }
+
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            line-height: 1.15;
+            margin: 0;
+            letter-spacing: -0.01em;
+            font-weight: 700;
+        }
+
+        header p {
+            margin: 6px 0 0;
+            color: var(--muted);
+            max-width: 52ch;
+        }
+
+        .health {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 6px 8px 6px 14px;
+            font-size: 0.9rem;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--muted);
+            flex: none;
+        }
+
+        .health[data-state="ok"] .dot {
+            background: var(--ok);
+        }
+
+        .health[data-state="bad"] .dot {
+            background: var(--bad);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 760px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        section {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            margin: 0 0 4px;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin: 0 0 18px;
+        }
+
+        .fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        fieldset {
+            border: 0;
+            padding: 0;
+            margin: 0 0 14px;
+        }
+
+        legend {
+            padding: 0;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        input {
+            width: 100%;
+            font: inherit;
+            color: var(--ink);
+            padding: 9px 10px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            background: #fbfbfd;
+        }
+
+        input:invalid:not(:placeholder-shown) {
+            border-color: var(--bad);
+        }
+
+        .samples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 4px 0 18px;
+        }
+
+        .samples span {
+            font-size: 0.85rem;
+            color: var(--muted);
+            align-self: center;
+            margin-right: 2px;
+        }
+
+        button {
+            font: inherit;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--line);
+            background: var(--panel);
+            color: var(--ink);
+            padding: 6px 12px;
+        }
+
+        button.small {
+            font-size: 0.85rem;
+            padding: 4px 10px;
+        }
+
+        button.primary {
+            width: 100%;
+            background: var(--iris);
+            border-color: var(--iris);
+            color: #fff;
+            font-weight: 600;
+            padding: 11px;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        button:focus-visible,
+        input:focus-visible {
+            outline: 3px solid var(--iris-soft);
+            outline-offset: 2px;
+            border-color: var(--iris);
+        }
+
+        .verdict {
+            font-size: 2.6rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin: 6px 0 2px;
+            color: var(--iris);
+            text-transform: capitalize;
+        }
+
+        .confidence {
+            color: var(--muted);
+            margin: 0 0 20px;
+        }
+
+        .empty {
+            color: var(--muted);
+            padding: 28px 0;
+        }
+
+        .bars {
+            display: grid;
+            gap: 12px;
+        }
+
+        .bar-row {
+            display: grid;
+            grid-template-columns: 92px 1fr 56px;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            text-transform: capitalize;
+        }
+
+        .track {
+            height: 12px;
+            background: var(--bg);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .fill {
+            height: 100%;
+            width: 0;
+            background: #a9a1c9;
+            border-radius: 999px;
+            transition: width 400ms ease;
+        }
+
+        .bar-row.top .fill {
+            background: var(--iris);
+        }
+
+        .bar-row.top {
+            font-weight: 600;
+        }
+
+        .pct {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .error {
+            background: #fbeaea;
+            color: var(--bad);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            margin-top: 4px;
+        }
+
+        .error ul {
+            margin: 6px 0 0;
+            padding-left: 18px;
+        }
+
+
+        footer {
+            margin-top: 24px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--iris);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .fill {
+                transition: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <div>
+                <h1>Iris species classifier</h1>
+                <p>Enter four flower measurements in centimetres to predict whether the iris is setosa, versicolor or
+                    virginica.</p>
+            </div>
+            <div class="health" id="health" data-state="loading" aria-live="polite">
+                <span class="dot" aria-hidden="true"></span>
+                <span id="health-text">Checking service…</span>
+                <button class="small" id="health-refresh" type="button">Recheck</button>
+            </div>
+        </header>
+
+        <div class="grid">
+            <section aria-labelledby="input-title">
+                <h2 id="input-title">Measurements</h2>
+                <p class="hint">Values must be between 0 and 20 cm.</p>
+
+                <div class="samples">
+                    <span>Fill with a sample:</span>
+                    <button class="small" type="button" data-sample="setosa">Setosa</button>
+                    <button class="small" type="button" data-sample="versicolor">Versicolor</button>
+                    <button class="small" type="button" data-sample="virginica">Virginica</button>
+                </div>
+
+                <form id="form" novalidate>
+                    <fieldset>
+                        <legend>Sepal</legend>
+                        <div class="fields">
+                            <div><label for="sepal_length">Length</label><input id="sepal_length" name="sepal_length"
+                                    type="number" step="0.1" min="0.1" max="19.9" placeholder="5.1" required></div>
+                            <div><label for="sepal_width">Width</label><input id="sepal_width" name="sepal_width"
+                                    type="number" step="0.1" min="0.1" max="19.9" placeholder="3.5" required></div>
+                        </div>
+                    </fieldset>
+                    <fieldset>
+                        <legend>Petal</legend>
+                        <div class="fields">
+                            <div><label for="petal_length">Length</label><input id="petal_length" name="petal_length"
+                                    type="number" step="0.1" min="0.1" max="19.9" placeholder="1.4" required></div>
+                            <div><label for="petal_width">Width</label><input id="petal_width" name="petal_width"
+                                    type="number" step="0.1" min="0.1" max="19.9" placeholder="0.2" required></div>
+                        </div>
+                    </fieldset>
+                    <button class="primary" id="predict-btn" type="submit">Predict species</button>
+                </form>
+            </section>
+
+            <section aria-labelledby="result-title" aria-live="polite">
+                <h2 id="result-title">Prediction</h2>
+                <div id="result">
+                    <p class="empty">Enter measurements or pick a sample, then select Predict species.</p>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            Endpoints: <code>GET /health</code>, <code>POST /predict</code>. Full API docs at <a href="/docs">/docs</a>.
+        </footer>
+    </div>
+
+    <script>
+        const FIELDS = ["sepal_length", "sepal_width", "petal_length", "petal_width"];
+        const SAMPLES = {
+            setosa: [5.1, 3.5, 1.4, 0.2],
+            versicolor: [6.0, 2.9, 4.5, 1.5],
+            virginica: [6.9, 3.1, 5.8, 2.3],
+        };
+        const $ = (id) => document.getElementById(id);
+        const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+        async function checkHealth() {
+            const box = $("health"), text = $("health-text");
+            box.dataset.state = "loading"; text.textContent = "Checking service…";
+            try {
+                const r = await fetch("/health");
+                const h = await r.json();
+                if (h.model_loaded) {
+                    box.dataset.state = "ok";
+                    text.textContent = `Model ready (${h.model_name})`;
+                    if (h.trained_sklearn_version !== h.runtime_sklearn_version) {
+                        text.textContent += " — sklearn version mismatch";
+                    }
+                } else {
+                    box.dataset.state = "bad";
+                    text.textContent = "Model not loaded";
+                    box.title = h.error || "";
+                }
+            } catch {
+                box.dataset.state = "bad";
+                text.textContent = "API unreachable";
+            }
+        }
+
+        function showError(title, items = []) {
+            $("result").innerHTML = `<div class="error"><strong>${esc(title)}</strong>${items.length ? "<ul>" + items.map(i => `<li>${esc(i)}</li>`).join("") + "</ul>" : ""}</div>`;
+        }
+
+        function showPrediction(p) {
+            const entries = Object.entries(p.probabilities).sort((a, b) => b[1] - a[1]);
+            const top = p.probabilities[p.species];
+            $("result").innerHTML = `
+    <div class="verdict">${esc(p.species)}</div>
+    <p class="confidence">${top !== undefined ? `${(top * 100).toFixed(1)}% probability` : ""}</p>
+    <div class="bars">${entries.map(([name, v]) => `
+      <div class="bar-row ${name === p.species ? "top" : ""}">
+        <span>${esc(name)}</span>
+        <div class="track"><div class="fill" data-w="${(v * 100).toFixed(1)}"></div></div>
+        <span class="pct">${(v * 100).toFixed(1)}%</span>
+      </div>`).join("")}
+    </div>`;
+            requestAnimationFrame(() => document.querySelectorAll(".fill").forEach(el => el.style.width = el.dataset.w + "%"));
+        }
+
+        $("form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const missing = FIELDS.filter(f => $(f).value === "");
+            const invalid = FIELDS.filter(f => $(f).value !== "" && !$(f).checkValidity());
+            if (missing.length || invalid.length) {
+                showError("Check the measurements", [
+                    ...missing.map(f => `${f.replace("_", " ")} is required`),
+                    ...invalid.map(f => `${f.replace("_", " ")} must be between 0 and 20`),
+                ]);
+                return;
+            }
+            const body = Object.fromEntries(FIELDS.map(f => [f, parseFloat($(f).value)]));
+            const btn = $("predict-btn");
+            btn.disabled = true; btn.textContent = "Predicting…";
+            try {
+                const r = await fetch("/predict", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+                const data = await r.json();
+                if (r.ok) showPrediction(data);
+                else if (r.status === 422) showError("The API rejected the input", data.detail.map(d => `${d.loc.at(-1)}: ${d.msg}`));
+                else if (r.status === 503) showError("Model not loaded. Check that artifacts/iris_model.pkl exists, then restart the server.");
+                else showError(`Request failed (HTTP ${r.status})`, [JSON.stringify(data.detail ?? data)]);
+            } catch {
+                showError("Couldn't reach the API. Check that uvicorn is running.");
+            } finally {
+                btn.disabled = false; btn.textContent = "Predict species";
+            }
+        });
+
+        document.querySelectorAll("[data-sample]").forEach(b => b.addEventListener("click", () => {
+            SAMPLES[b.dataset.sample].forEach((v, i) => $(FIELDS[i]).value = v);
+        }));
+        $("health-refresh").addEventListener("click", checkHealth);
+        checkHealth();
+    </script>
+</body>
+
+</html>
