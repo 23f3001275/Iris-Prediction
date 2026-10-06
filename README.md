@@ -22,6 +22,8 @@ The model is a scikit-learn `Pipeline` (StandardScaler + classifier). It is save
 iris-api/
 ├── iris_ml_pipeline.ipynb   # EDA, training, exports the .pkl and CSVs
 ├── main.py                  # FastAPI app
+├── static/
+│   └── index.html           # browser UI served at /
 ├── requirements.txt
 ├── README.md
 └── artifacts/
@@ -34,6 +36,7 @@ iris-api/
 
 | Method | Path | Description |
 |---|---|---|
+| GET | `/` | Browser UI for checking health and making predictions |
 | GET | `/health` | Service status and whether the model loaded |
 | POST | `/predict` | Predicts the species from the four measurements |
 
@@ -105,7 +108,7 @@ uvicorn main:app --reload
 
 ### 5. Test it
 
-Open the interactive docs at http://127.0.0.1:8000/docs, or use curl:
+Open the UI at http://127.0.0.1:8000/ or the interactive docs at http://127.0.0.1:8000/docs, or use curl:
 
 ```bash
 curl http://127.0.0.1:8000/health
